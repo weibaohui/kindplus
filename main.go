@@ -51,7 +51,7 @@ func main() {
 
 func processKubeConfig(path string) {
 	// 读取 kubeconfig 文件
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 		return
