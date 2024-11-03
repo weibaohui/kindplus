@@ -1,4 +1,4 @@
-module github.com/weibaohui/mkind
+module github.com/weibaohui/kindplus
 
 go 1.23.0
 
