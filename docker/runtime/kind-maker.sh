@@ -10,17 +10,19 @@ DOMAIN=$1
 KIND_CLUSTER_NAME=$2
 KIND_CLUSTER_PORT=$3
 INNER_DOMAIN="kind-svc.ns.svc.cluster.local"
+mkdir -p /kind-install && cd /kind-install
 #先进行清理，避免出现混乱
 kind delete cluster --name $KIND_CLUSTER_NAME
 
-#开始执行集群安全，创建必要目录
-mkdir -p $KIND_CLUSTER_NAME
-cd $KIND_CLUSTER_NAME
-rm -rf certs
-mkdir -p "certs"
-
-# 创建 Kind 配置文件，指定挂载证书路径
-cat <<EOF > kind-config.yaml
+#创建证书目录
+rm -rf certs &&mkdir -p "certs"
+# 检查 /path/to/file 是否存在
+if [ -f "/kind-install/kind-config.yaml" ]; then
+  echo "文件 /kind-install/kind-config.yaml 存在"
+else
+  echo "文件 /kind-install/kind-config.yaml 不存在,创建默认配置文件"
+  # 创建 Kind 配置文件，指定挂载证书路径
+  cat <<EOF > kind-config.yaml
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 name: $KIND_CLUSTER_NAME
@@ -49,6 +51,8 @@ nodes:
       - hostPath: ./certs                  # 主机上的证书目录路径
         containerPath: /etc/kubernetes/pki # 挂载到容器中的路径
 EOF
+
+fi
 
 # 创建 Kind 集群
 kind create cluster --config kind-config.yaml
@@ -168,6 +172,18 @@ openssl x509 -in $KIND_CLUSTER_NAME/client.crt -noout -text | grep -A1 "Subject 
 echo "清理临时文件"
 #rm client.key client.csr client.crt
 kubectl delete csr "$CSR_NAME"
+
+
+# 查看/kind-init文件夹下的目录，输出文件列表
+
+# 检查 /kind-init 目录是否存在
+if [ -d "/kind-init" ]; then
+  echo "目录 /kind-init 存在，执行初始化"
+  ls -l /kind-init/
+  kubectl apply -f /kind-init
+else
+  echo "目录 /kind-init 不存在，跳过初始化"
+fi
 
 echo "$KIND_CLUSTER_NAME https://$DOMAIN:$KIND_CLUSTER_PORT 集群创建完成！"
 echo "======"
