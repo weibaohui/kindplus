@@ -216,10 +216,7 @@ echo "Server certificate generated with SAN: ${DOMAIN}"
 echo "Kubeconfig file generated: ${KUBECONFIG_FILE}"
 
 # 验证安装情况
-echo "查看集群信息"
-kubectl get nodes
-echo "查看集群状态"
-kubectl get pods -A
+
 echo "查看端口占用情况"
 netstat -anpt | grep $KIND_CLUSTER_PORT
 echo "查看证书信息"
@@ -244,6 +241,12 @@ if [ -d "/kind-init" ]; then
 else
   echo "目录 /kind-init 不存在，跳过初始化"
 fi
+
+
+echo "查看集群信息"
+kubectl get nodes
+echo "查看集群状态"
+kubectl get pods -A
 
 echo "$KIND_CLUSTER_NAME https://$DOMAIN:$KIND_CLUSTER_PORT 集群创建完成！"
 echo "======"
