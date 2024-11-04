@@ -13,7 +13,7 @@ RUN chmod +x /start.sh
 RUN curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.24.0/kind-linux-amd64 \
     && chmod +x ./kind \
     && mv ./kind /usr/local/bin/kind
-ADD kind-make.sh /
+ADD kind-maker.sh /
 
 COPY --from=kubectl /opt/bitnami/kubectl/bin/kubectl /usr/local/bin/kubectl
 
