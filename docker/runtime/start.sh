@@ -15,6 +15,6 @@ check_docker() {
 check_docker
 
 # 调用安装kind脚本
-bash kind-maker.sh  cluster-2.dev.power.sd.istio.space kind 6552
+bash kind-maker.sh  -d cluster-2.dev.power.sd.istio.space -n kind -p 6552 -i 192.168.0.124
 
 tail -f /dev/null

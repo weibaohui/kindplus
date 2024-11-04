@@ -17,5 +17,8 @@ ADD kind-maker.sh /
 
 COPY --from=kubectl /opt/bitnami/kubectl/bin/kubectl /usr/local/bin/kubectl
 
+# 初始化脚本，挂载覆盖
+ADD ingress-controller-host.yaml /kind-init/ingress-controller-host.yaml
+
 ENTRYPOINT [""]
 CMD ["bash","/start.sh"]

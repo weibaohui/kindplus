@@ -1,15 +1,68 @@
 #!/bin/bash
+set -euo pipefail
 
-# 检查输入参数
-if [ $# -ne 3 ]; then
-  echo "Usage: $0 <custom-domain> <cluster-name> <cluster-port>"
+# 定义错误处理函数
+error_handler() {
+    echo "脚本发生错误，退出状态码：$?"
+    curl -L -X POST "http://kindplus.power:8080/kind/instance_id/@@instanceID@@/status/error" -H 'Authorization: @@webhookToken@@'
+    exit 1
+}
+trap 'error_handler' ERR
+
+
+
+# 初始化变量
+DOMAIN=""
+KIND_CLUSTER_IP=""
+KIND_CLUSTER_NAME=""
+KIND_CLUSTER_PORT=""
+help_flag=false
+
+# 使用 getopts 解析参数
+while getopts "h:d:i:n:p:" opt; do
+  case $opt in
+    h)
+      help_flag=true
+      ;;
+    d)
+      DOMAIN=$OPTARG
+      ;;
+    i)
+      KIND_CLUSTER_IP=$OPTARG
+      ;;
+    n)
+      KIND_CLUSTER_NAME=$OPTARG
+      ;;
+    p)
+      KIND_CLUSTER_PORT=$OPTARG
+      ;;
+    \?)
+      echo "无效的选项: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
+
+# 检查是否提供了所有必要的参数
+if $help_flag; then
+  echo "用法: $0 -d domain -i ip -n name -p port"
+  echo "  -d 指定Kind 访问域名"
+  echo "  -i 指定Kind IP地址"
+  echo "  -n 指定名称"
+  echo "  -p 指定APIServer端口"
   exit 1
 fi
 
-DOMAIN=$1
-KIND_CLUSTER_NAME=$2
-KIND_CLUSTER_PORT=$3
-INNER_DOMAIN="kind-svc.ns.svc.cluster.local"
+# 输出解析到的参数
+echo "访问域名: $DOMAIN"
+echo "IP地址: $KIND_CLUSTER_IP"
+echo "集群名称: $KIND_CLUSTER_NAME"
+echo "APIServer端口: $KIND_CLUSTER_PORT"
+
+
+
+#todo nginx内部转发是否走内部域名？
+INNER_DOMAIN="${KIND_CLUSTER_NAME}.default.svc.cluster.local"
 mkdir -p /kind-install && cd /kind-install
 #先进行清理，避免出现混乱
 kind delete cluster --name $KIND_CLUSTER_NAME
@@ -41,15 +94,22 @@ nodes:
                 certSANs:
                   - ${DOMAIN} #外部访问域名
                   - ${INNER_DOMAIN} #内部访问域名,从nginx实例访问kind的域名
-                  - 0.0.0.0
-                  - 192.168.182.124 #从nginx实例访问kind的IP
+                  - ${KIND_CLUSTER_IP} #从nginx实例访问kind的IP
                   - localhost
+                  - 0.0.0.0
                   - 127.0.0.1
                 extraArgs:
                   enable-admission-plugins: MutatingAdmissionWebhook,ValidatingAdmissionWebhook
     extraMounts:
       - hostPath: ./certs                  # 主机上的证书目录路径
         containerPath: /etc/kubernetes/pki # 挂载到容器中的路径
+    extraPortMappings:
+      - containerPort: 32480
+        hostPort: 32480
+        protocol: TCP
+      - containerPort: 32443
+        hostPort: 32443
+        protocol: TCP
 EOF
 
 fi
@@ -69,10 +129,10 @@ API_SERVER="https://${DOMAIN}:${KIND_CLUSTER_PORT}"
 openssl genrsa -out "client.key" 2048
 
 # 生成证书签名请求 (CSR) 时添加 SAN
-openssl req -new -key "client.key" -out "client.csr" -subj "/CN=client-user/O=my-org" -reqexts SAN -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\nsubjectAltName=DNS:${DOMAIN},DNS:192.168.182.124"))
+openssl req -new -key "client.key" -out "client.csr" -subj "/CN=client-user/O=my-org" -reqexts SAN -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\nsubjectAltName=DNS:${DOMAIN},DNS:${KIND_CLUSTER_IP}"))
 
 # 使用 CA 签发证书
-openssl x509 -req -in "client.csr" -CA "${CA_CERT}" -CAkey "${CA_KEY}" -CAcreateserial -out "client.crt" -days 10000 -extfile <(printf "subjectAltName=DNS:%s,DNS:192.168.182.124" "${DOMAIN}")
+openssl x509 -req -in "client.csr" -CA "${CA_CERT}" -CAkey "${CA_KEY}" -CAcreateserial -out "client.crt" -days 10000 -extfile <(printf "subjectAltName=DNS:${DOMAIN},DNS:${KIND_CLUSTER_IP}")
 
 
 
@@ -163,7 +223,7 @@ kubectl get pods -A
 echo "查看端口占用情况"
 netstat -anpt | grep $KIND_CLUSTER_PORT
 echo "查看证书信息"
-openssl x509 -in $KIND_CLUSTER_NAME/client.crt -noout -text | grep -A1 "Subject Alternative Name"
+openssl x509 -in client.crt -noout -text | grep -A1 "Subject Alternative Name"
 
 
 

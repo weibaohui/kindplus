@@ -7,4 +7,4 @@
 
 ## 执行
 * /kind-install为集群安装目录，安装过程中产生的脚本或证书文件都保存在此目录下
-* 检测/kind-init目录下是否有挂载的yaml文件，有即执行kubectl apply -f /kind-install/kind-init 
+* 检测/kind-init目录下是否有挂载的yaml文件，有即执行kubectl apply -f /kind-init 
