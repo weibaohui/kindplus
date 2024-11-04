@@ -1,0 +1,126 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kindplus
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: kindplus
+  name: kindplus
+  namespace: kindplus
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  labels:
+    app: kindplus
+  name: kindplus
+  namespace: kindplus
+rules:
+  - verbs:
+      - "*"
+    apiGroups:
+      - "*"
+    resources:
+      - "*"
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  labels:
+    app: kindplus
+  name: kindplus
+rules:
+  - verbs:
+      - "*"
+    apiGroups:
+      - "*"
+    resources:
+      - "*"
+  - verbs:
+      - "*"
+    nonResourceURLs:
+      - "*"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: kindplus
+  name: kindplus
+  namespace: kindplus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kindplus
+subjects:
+  - kind: ServiceAccount
+    name: kindplus
+    namespace: kindplus
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kindplus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kindplus
+subjects:
+  - kind: ServiceAccount
+    name: kindplus
+    namespace: kindplus
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kindplus
+  namespace: kindplus
+  labels:
+    app: kindplus
+spec:
+  ports:
+    - name: proxy
+      protocol: TCP
+      port: 9443
+      targetPort: 9443
+    - name: mgm
+      protocol: TCP
+      port: 80
+      targetPort: 80
+  selector:
+    app: kindplus
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kindplus
+  namespace: kindplus
+  labels:
+    app: kindplus
+spec:
+  selector:
+    matchLabels:
+      app: kindplus
+  template:
+    metadata:
+      labels:
+        app: kindplus
+    spec:
+      containers:
+        - name: kindplus
+          image: weibh/kindplus
+          ports:
+            - containerPort: 9443
+              protocol: TCP
+              name: proxy
+            - containerPort: 80
+              protocol: TCP
+              name: mgm
+          imagePullPolicy: Always
+      restartPolicy: Always
+      serviceAccountName: kindplus

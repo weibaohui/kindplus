@@ -1,0 +1,6 @@
+kindplus 运行所需镜像
+0.运行在宿主集群，专门负责管理kind小集群
+1.含有nginx，监听9443端口，将本集群内所有kind集群的证书收集，并加载到nginx.conf中
+2.对外暴露9443端口，用于转发kind集群访问流量，需要使用4层方式对外开放。如NodePort、ingress-controller的四层转发
+3.本程序不负责转发kind集群内的服务访问。
+4.宿主集群上安装ingress-controller，专门负责监听32480的流量，使用ingress，转发到对应的kind集群的SVC上
