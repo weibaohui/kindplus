@@ -1,8 +1,13 @@
 FROM golang:alpine as builder
 WORKDIR /build
-COPY . .
+COPY .  .
+RUN ls
 RUN go build -o kindplus .
 
-FROM nginx
-COPY --from=builder /build/kindplus /usr/local/bin/kindplus
-CMD ["/usr/local/bin/kindplus"]
+FROM nginx:alpine
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+RUN apk add --no-cache curl bash inotify-tools
+ADD docker/kindplus/reload.sh /app/reload.sh
+COPY --from=builder /build/kindplus /app/kindplus
+RUN chmod +x /app/reload.sh
+ENTRYPOINT ["/app/reload.sh"]

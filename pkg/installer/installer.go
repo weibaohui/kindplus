@@ -24,6 +24,7 @@ type Config struct {
 	Port       int    // Kind APIServer 端口
 	Name       string // Kind 集群名称
 	Namespace  string // kind 集群安装在哪个命名空间
+
 }
 
 func (i *Installer) Deploy() {
