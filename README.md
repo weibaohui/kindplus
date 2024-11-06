@@ -1,4 +1,4 @@
-# mkind
+# kindplus
 ## 基础环境
 ### 镜像
 * 运行：本方案使用Kind项目，因此采用Docker:dind为基础镜像
