@@ -55,9 +55,29 @@ func (i *Installer) Deploy() {
 						{
 							Name:            name,
 							Image:           i.Runtime.BaseImage,
-							ImagePullPolicy: corev1.PullIfNotPresent,
+							ImagePullPolicy: corev1.PullAlways,
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: new(bool),
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "KIND_CLUSTER_NAME",
+									Value: name,
+								}, {
+									Name:  "KIND_CLUSTER_PORT",
+									Value: fmt.Sprintf("%v", i.Config.Port),
+								}, {
+									Name:  "DOMAIN",
+									Value: fmt.Sprintf("%s.%s", name, i.Config.BaseDomain),
+								},
+								{
+									Name: "KIND_CLUSTER_IP",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "status.podIP",
+										},
+									},
+								},
 							},
 						},
 					},

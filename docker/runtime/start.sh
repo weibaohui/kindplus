@@ -15,6 +15,13 @@ check_docker() {
 check_docker
 
 # 调用安装kind脚本
-bash kind-maker.sh  -d cluster-2.dev.power.sd.istio.space -n kind -p 6552 -i 192.168.0.124
+# 取环境变量，启动容器时注入
+KIND_CLUSTER_NAME=${KIND_CLUSTER_NAME:-'kind-noname'}
+KIND_CLUSTER_IP=${KIND_CLUSTER_IP:-'0.0.0.0'}
+KIND_CLUSTER_PORT=${KIND_CLUSTER_PORT:-'6443'}
+DOMAIN=${DOMAIN:-'kind-noname.k8m.site'}
+
+
+bash kind-maker.sh  -d ${DOMAIN} -n ${KIND_CLUSTER_NAME} -p ${KIND_CLUSTER_PORT} -i ${KIND_CLUSTER_IP}
 
 tail -f /dev/null
