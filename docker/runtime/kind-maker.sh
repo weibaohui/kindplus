@@ -219,7 +219,7 @@ echo "Kubeconfig file generated: ${KUBECONFIG_FILE}"
 
 echo "查看端口占用情况"
 netstat -anpt | grep $KIND_CLUSTER_PORT
-echo "查看证书信息"
+echo "查看kubeconfig证书的域名信息"
 openssl x509 -in client.crt -noout -text | grep -A1 "Subject Alternative Name"
 
 
