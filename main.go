@@ -33,7 +33,7 @@ func main() {
 
 	r.Use(cors.Default())
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
-	klog.Infof("listen and serve on 0.0.0.0:%d", "80")
+	klog.Infof("listen and serve on 0.0.0.0:%s", "80")
 	err := r.Run(fmt.Sprintf(":%d", 80))
 	if err != nil {
 		klog.Fatalf("Error %v", err)
