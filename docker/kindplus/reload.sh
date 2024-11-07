@@ -11,15 +11,17 @@ start_app() {
     echo "Starting kindplus..."
     mv $APP_PATH $CURRENT_PATH          # 将 kindplus 重命名为 kindplus.current
     chmod +x $CURRENT_PATH              # 确保文件可执行
-    sleep 1
+    sleep 3
     supervisord -c /etc/supervisord.conf
 }
 restart_app() {
     echo "restarting kindplus..."
     mv $APP_PATH $CURRENT_PATH          # 将 kindplus 重命名为 kindplus.current
     chmod +x $CURRENT_PATH              # 确保文件可执行
-    sleep 1
-    supervisorctl restart kindplus
+    sleep 3
+    supervisorctl stop kindplus
+    sleep 3
+    supervisorctl start kindplus
 }
 
 
@@ -30,6 +32,7 @@ start_app
 while true; do
     # 监听 close_write 事件，且排除文件重命名可能带来的误触发
     inotifywait -e close_write --exclude "kindplus.current" $WATCH_PATH
+    sleep 3
 
     # 检查是否是新的 kindplus 文件写入完成
     if [ -f "$APP_PATH" ]; then
